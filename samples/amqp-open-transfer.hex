@@ -1,0 +1,5 @@
+# AMQP 1.0 protocol header
+414d515000010000
+# Open performative: described open + list8(container-id="sample-client")
+005310c00f01a10d73616d706c652d636c69656e74
+# Frames are length-prefixed by an 8-byte AMQP frame header at transport time.
