@@ -24,7 +24,7 @@ func NewRouter(a address.Repository, b address.BindingRepository, m routing.Matc
 func (r *Router) Resolve(ctx context.Context, source, key string, headers map[string]string) ([]Route, error) {
 	src, err := r.addresses.Get(ctx, source)
 	if err != nil {
-		return nil, fmt.Errorf("load source address: %v", err)
+		return nil, fmt.Errorf("load source address: %w", err)
 	}
 	switch src.Kind {
 	case address.KindQueue, address.KindTemporary:
@@ -35,7 +35,7 @@ func (r *Router) Resolve(ctx context.Context, source, key string, headers map[st
 	}
 	bindings, err := r.bindings.ListBindings(ctx, source)
 	if err != nil {
-		return nil, fmt.Errorf("list bindings: %v", err)
+		return nil, fmt.Errorf("list bindings: %w", err)
 	}
 	seen := map[string]struct{}{}
 	out := []Route{}

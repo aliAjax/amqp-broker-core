@@ -13,19 +13,19 @@ func (d *DeliveryMemory) Put(c context.Context, m delivery.Message) error { retu
 func (d *DeliveryMemory) Get(c context.Context, id string) (delivery.Message, error) {
 	msg, err := d.db.GetDelivery(c, id)
 	if err != nil {
-		return msg, fmt.Errorf("get delivery: %v", err)
+		return msg, fmt.Errorf("get delivery: %w", err)
 	}
 	return msg, nil
 }
 func (d *DeliveryMemory) Update(c context.Context, m delivery.Message) error {
 	if err := d.db.Update(c, m); err != nil {
-		return fmt.Errorf("update delivery: %v", err)
+		return fmt.Errorf("update delivery: %w", err)
 	}
 	return nil
 }
 func (d *DeliveryMemory) Delete(c context.Context, id string) error {
 	if err := d.db.DeleteMessage(c, id); err != nil {
-		return fmt.Errorf("delete delivery: %v", err)
+		return fmt.Errorf("delete delivery: %w", err)
 	}
 	return nil
 }

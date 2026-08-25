@@ -39,7 +39,7 @@ func NewService(m delivery.Repository, c delivery.ConsumerRepository, a address.
 func (s *Service) Publish(ctx context.Context, in delivery.Publish) ([]delivery.Message, error) {
 	a, err := s.addresses.Get(ctx, in.Address)
 	if err != nil {
-		return nil, fmt.Errorf("load address: %v", err)
+		return nil, fmt.Errorf("load address: %w", err)
 	}
 	if err = a.Accepting(); err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (s *Service) Publish(ctx context.Context, in delivery.Publish) ([]delivery.
 	}
 	routes, err := s.router.Resolve(ctx, in.Address, in.RoutingKey, in.Headers)
 	if err != nil {
-		return nil, fmt.Errorf("resolve routes: %v", err)
+		return nil, fmt.Errorf("resolve routes: %w", err)
 	}
 	if len(routes) == 0 {
 		return nil, errors.New("message was unroutable")
@@ -68,11 +68,11 @@ func (s *Service) Publish(ctx context.Context, in delivery.Publish) ([]delivery.
 		}
 		offset, err := s.log.Append(ctx, msg.ID, msg.Body)
 		if err != nil {
-			return created, fmt.Errorf("append body log: %v", err)
+			return created, fmt.Errorf("append body log: %w", err)
 		}
 		msg.LogOffset = offset
 		if err = s.messages.Put(ctx, msg); err != nil {
-			return created, fmt.Errorf("save message metadata: %v", err)
+			return created, fmt.Errorf("save message metadata: %w", err)
 		}
 		created = append(created, msg)
 		if err = s.enforceMaxLength(ctx, route.Destination); err != nil {
@@ -197,7 +197,7 @@ func (s *Service) Acquire(ctx context.Context, consumerID string) (delivery.Mess
 	}
 	ready, err := s.messages.ListReady(ctx, c.Address, 1)
 	if err != nil {
-		return delivery.Message{}, 0, fmt.Errorf("list ready messages: %v", err)
+		return delivery.Message{}, 0, fmt.Errorf("list ready messages: %w", err)
 	}
 	if len(ready) == 0 {
 		return delivery.Message{}, 0, errors.New("no message available")
@@ -246,7 +246,7 @@ func (s *Service) Settle(ctx context.Context, consumerID string, deliveryID uint
 	}
 	msg, err := s.messages.Get(ctx, msgID)
 	if err != nil {
-		return fmt.Errorf("load unsettled message: %v", err)
+		return fmt.Errorf("load unsettled message: %w", err)
 	}
 	switch state {
 	case delivery.StateAccepted:

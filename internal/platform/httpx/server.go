@@ -232,6 +232,10 @@ func (s *Server) publish(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := s.Runtime.Delivery.Publish(r.Context(), p)
 	if err != nil {
+		if errors.Is(err, address.ErrNotFound) {
+			s.fail(w, 404, "address_not_found", err)
+			return
+		}
 		s.fail(w, 422, "publish_failed", err)
 		return
 	}
@@ -267,6 +271,10 @@ func (s *Server) createConsumer(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := s.Runtime.Delivery.Register(r.Context(), in.ID, in.Address, in.Prefetch, in.Semantics)
 	if err != nil {
+		if errors.Is(err, address.ErrNotFound) {
+			s.fail(w, 404, "address_not_found", err)
+			return
+		}
 		s.fail(w, 422, "consumer_failed", err)
 		return
 	}
@@ -290,6 +298,10 @@ func (s *Server) settle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.Runtime.Delivery.Settle(r.Context(), r.PathValue("id"), in.DeliveryID, in.State); err != nil {
+		if errors.Is(err, delivery.ErrMessageNotFound) {
+			s.fail(w, 404, "message_not_found", err)
+			return
+		}
 		s.fail(w, 409, "settlement_failed", err)
 		return
 	}
