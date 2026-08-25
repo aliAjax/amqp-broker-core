@@ -79,7 +79,7 @@ func Build(settings Settings) (*Runtime, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if err := snap.Load(ctx, mem); err != nil {
-		return nil, fmt.Errorf("initialize snapshot: %v", err)
+		return nil, fmt.Errorf("initialize snapshot: %w", err)
 	}
 	logStore, err := storage.OpenFileLog(filepath.Clean(settings.DataDir))
 	if err != nil {
@@ -106,7 +106,7 @@ type settingsConfig struct{ node string }
 func (s settingsConfig) GetNodeID() string { return s.node }
 func (r *Runtime) Start(ctx context.Context) error {
 	if err := r.AMQP.Start(ctx); err != nil {
-		return fmt.Errorf("start AMQP: %v", err)
+		return fmt.Errorf("start AMQP: %w", err)
 	}
 	return nil
 }

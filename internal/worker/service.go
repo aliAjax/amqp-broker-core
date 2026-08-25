@@ -55,6 +55,6 @@ func (s *Service) Stop(ctx context.Context) error {
 	case <-s.done:
 		return nil
 	case <-ctx.Done():
-		return fmt.Errorf("stop worker: %v", ctx.Err())
+		return fmt.Errorf("stop worker: %w", ctx.Err())
 	}
 }

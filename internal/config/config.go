@@ -63,10 +63,10 @@ func Load(path string) (Config, error) {
 	if path != "" {
 		b, err := os.ReadFile(path)
 		if err != nil {
-			return c, fmt.Errorf("read config: %v", err)
+			return c, fmt.Errorf("read config: %w", err)
 		}
 		if err = yaml.Unmarshal(b, &c); err != nil {
-			return c, fmt.Errorf("parse yaml: %v", err)
+			return c, fmt.Errorf("parse yaml: %w", err)
 		}
 	}
 	if c.AMQP.IdleTimeoutRaw != "" {

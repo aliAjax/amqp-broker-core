@@ -38,7 +38,7 @@ type ManagementServer interface {
 func (s *Server) Start(ctx context.Context) error {
 	ln, err := net.Listen("tcp", s.Address)
 	if err != nil {
-		return fmt.Errorf("listen gRPC: %v", err)
+		return fmt.Errorf("listen gRPC: %w", err)
 	}
 	opts := []grpc.ServerOption{grpc.UnaryInterceptor(s.interceptor)}
 	s.server = grpc.NewServer(opts...)
