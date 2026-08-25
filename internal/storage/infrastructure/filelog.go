@@ -14,17 +14,9 @@ import (
 
 type FileLog struct {
 	mu      sync.Mutex
-	opCtx   context.Context
 	path    string
 	file    *os.File
 	offsets map[int64]int64
-}
-
-func (l *FileLog) operationContext(ctx context.Context) context.Context {
-	if l.opCtx == nil {
-		l.opCtx = ctx
-	}
-	return l.opCtx
 }
 
 func OpenFileLog(dir string) (*FileLog, error) {
@@ -77,7 +69,7 @@ func (l *FileLog) Append(ctx context.Context, id string, body []byte) (int64, er
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if err := l.operationContext(ctx).Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return 0, err
 	}
 	pos, err := l.file.Seek(0, io.SeekEnd)
@@ -101,7 +93,7 @@ func (l *FileLog) Append(ctx context.Context, id string, body []byte) (int64, er
 func (l *FileLog) Read(ctx context.Context, offset int64) ([]byte, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if err := l.operationContext(ctx).Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	pos, ok := l.offsets[offset]
@@ -132,7 +124,7 @@ func (l *FileLog) Read(ctx context.Context, offset int64) ([]byte, error) {
 func (l *FileLog) Compact(ctx context.Context, live map[int64]struct{}) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if err := l.operationContext(ctx).Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	tmp, err := os.CreateTemp(filepath.Dir(l.path), "compact-*.log")

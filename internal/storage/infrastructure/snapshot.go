@@ -94,15 +94,7 @@ func (m *Memory) Restore(ctx context.Context, s Snapshot) error {
 }
 
 type SnapshotFile struct {
-	path  string
-	opCtx context.Context
-}
-
-func (f *SnapshotFile) operationContext(ctx context.Context) context.Context {
-	if f.opCtx == nil {
-		f.opCtx = ctx
-	}
-	return f.opCtx
+	path string
 }
 
 func NewSnapshotFile(dir string) *SnapshotFile {
@@ -120,10 +112,10 @@ func (f *SnapshotFile) Load(ctx context.Context, m *Memory) error {
 	if err = json.Unmarshal(b, &s); err != nil {
 		return fmt.Errorf("decode metadata snapshot: %w", err)
 	}
-	return m.Restore(f.operationContext(ctx), s)
+	return m.Restore(ctx, s)
 }
 func (f *SnapshotFile) Save(ctx context.Context, m *Memory) error {
-	s, err := m.Snapshot(f.operationContext(ctx))
+	s, err := m.Snapshot(ctx)
 	if err != nil {
 		return err
 	}
