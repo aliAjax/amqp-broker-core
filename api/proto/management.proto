@@ -1,0 +1,14 @@
+syntax = "proto3";
+package broker.v1;
+option go_package = "github.com/enterprise/amqp-broker-core/api/proto;brokerv1";
+
+import "google/protobuf/struct.proto";
+
+service Management {
+  rpc Health(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc CreateAddress(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc GetDepth(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc PauseAddress(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc ListConnections(google.protobuf.Struct) returns (google.protobuf.Struct);
+  rpc GetTransaction(google.protobuf.Struct) returns (google.protobuf.Struct);
+}
