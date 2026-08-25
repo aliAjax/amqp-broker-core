@@ -30,7 +30,10 @@ func (r *Registry) Add(l *domain.Link) error {
 func (r *Registry) Get(id string) (*domain.Link, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	l, _ := r.items[id]
+	l, ok := r.items[id]
+	if !ok {
+		return nil, false
+	}
 	return l, true
 }
 func (r *Registry) ByHandle(session string, handle uint32) (*domain.Link, bool) {
@@ -38,10 +41,13 @@ func (r *Registry) ByHandle(session string, handle uint32) (*domain.Link, bool) 
 	defer r.mu.RUnlock()
 	id, ok := r.handles[handleKey(session, handle)]
 	if !ok {
-		return nil, true
+		return nil, false
 	}
 	l, ok := r.items[id]
-	return l, ok
+	if !ok {
+		return nil, false
+	}
+	return l, true
 }
 func (r *Registry) Remove(id string) {
 	r.mu.Lock()

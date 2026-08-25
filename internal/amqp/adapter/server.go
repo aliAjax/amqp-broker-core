@@ -60,6 +60,12 @@ func (s *Server) Start(ctx context.Context) error {
 	go s.accept(runCtx)
 	return nil
 }
+func (s *Server) LocalAddr() string {
+	if s.listener == nil {
+		return s.Address
+	}
+	return s.listener.Addr().String()
+}
 func (s *Server) accept(ctx context.Context) {
 	defer s.wg.Done()
 	for {
@@ -293,7 +299,10 @@ func (p *peer) onAttach(ctx context.Context, channel uint16, perf amqp.Performat
 	if err = p.server.Links.Add(l); err != nil {
 		return err
 	}
-	s, _ := p.server.Sessions.Get(sessionID)
+	s, found := p.server.Sessions.Get(sessionID)
+	if !found {
+		return errors.New("attach on unmapped session")
+	}
 	if err = s.Attach(handle, id); err != nil {
 		return err
 	}
@@ -314,11 +323,17 @@ func (p *peer) onFlow(ctx context.Context, channel uint16, perf amqp.Performativ
 	if !ok {
 		return errors.New("flow on unknown session")
 	}
-	s, _ := p.server.Sessions.Get(sessionID)
+	s, found := p.server.Sessions.Get(sessionID)
+	if !found {
+		return errors.New("flow on unknown session")
+	}
 	s.Flow(perf.Uint(1), perf.Uint(3))
 	handle := perf.Uint(4)
 	l, found := p.server.Links.ByHandle(sessionID, handle)
 	if !found {
+		// The referenced handle is no longer attached (e.g. the link was
+		// detached). A flow that targets a detached link must not crash the
+		// broker; simply ignore the link-level portion of the frame.
 		return nil
 	}
 	credit := perf.Uint(6)
@@ -351,7 +366,10 @@ func (p *peer) onTransfer(ctx context.Context, channel uint16, perf amqp.Perform
 	if !ok {
 		return errors.New("transfer on unknown session")
 	}
-	s, _ := p.server.Sessions.Get(sessionID)
+	s, found := p.server.Sessions.Get(sessionID)
+	if !found {
+		return errors.New("transfer on unknown session")
+	}
 	if err := s.ConsumeIncoming(); err != nil {
 		return err
 	}
@@ -360,7 +378,10 @@ func (p *peer) onTransfer(ctx context.Context, channel uint16, perf amqp.Perform
 	if !ok {
 		return errors.New("transfer on unknown link")
 	}
-	l, _ := p.server.Links.Get(id)
+	l, found := p.server.Links.Get(id)
+	if !found {
+		return errors.New("transfer on detached link")
+	}
 	if l.Role != link.RoleReceiver {
 		return errors.New("transfer sent on sender link")
 	}
@@ -434,7 +455,12 @@ func (p *peer) onEnd(channel uint16) error {
 	if !ok {
 		return errors.New("end on unknown session")
 	}
-	s, _ := p.server.Sessions.Get(id)
+	s, found := p.server.Sessions.Get(id)
+	if !found {
+		delete(p.sessionIDs, channel)
+		p.connection.RemoveSession(channel)
+		return p.write(channel, amqp.FrameTypeAMQP, amqp.Performative{Descriptor: amqp.DescriptorEnd, Fields: []any{}}, nil)
+	}
 	_ = s.End()
 	p.server.Links.RemoveSession(id)
 	p.server.Sessions.Remove(id)
