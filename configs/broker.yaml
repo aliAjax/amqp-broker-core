@@ -1,0 +1,23 @@
+node_id: node-1
+http:
+  address: ":8080"
+grpc:
+  address: ":9090"
+amqp:
+  address: ":5672"
+  max_frame_size: 1048576
+  idle_timeout: 30s
+  max_connections: 1024
+auth:
+  allow_anonymous: true
+  token: change-me
+storage:
+  driver: file
+  data_dir: ./data
+  dsn: ""
+limits:
+  body_bytes: 1048576
+  requests_per_second: 200
+workers:
+  sweep_interval: 250ms
+  lease_ttl: 15s
