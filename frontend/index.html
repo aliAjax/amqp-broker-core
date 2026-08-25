@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AMQP Broker Operations</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">AMQP 1.0</p>
+      <h1>Broker Operations</h1>
+    </div>
+    <div class="topbar-actions">
+      <span id="connection-state" class="status-pill" aria-live="polite">Connecting</span>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary" aria-label="Broker summary">
+      <div><span>Node</span><strong id="node-id">-</strong></div>
+      <div><span>Storage</span><strong id="storage">-</strong></div>
+      <div><span>Addresses</span><strong id="address-count">0</strong></div>
+      <div><span>Connections</span><strong id="connection-count">0</strong></div>
+      <div><span>Leases</span><strong id="lease-count">0</strong></div>
+    </section>
+
+    <div id="error" class="error" role="alert" hidden></div>
+
+    <section class="workspace">
+      <div class="section-heading">
+        <div><p class="eyebrow">Routing</p><h2>Addresses</h2></div>
+        <form id="create-address" class="inline-form">
+          <label><span>Name</span><input name="name" required maxlength="96" placeholder="telemetry.raw"></label>
+          <label><span>Kind</span><select name="kind"><option>queue</option><option>topic</option><option>direct</option><option>fanout</option></select></label>
+          <button type="submit">Create</button>
+        </form>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Kind</th><th>Durable</th><th>Paused</th><th>Depth</th></tr></thead>
+          <tbody id="addresses"><tr><td colspan="5" class="empty">Loading addresses</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <div class="section-heading"><div><p class="eyebrow">Transport</p><h2>Connections</h2></div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>ID</th><th>Remote</th><th>State</th><th>Sessions</th></tr></thead><tbody id="connections"></tbody></table>
+        </div>
+      </div>
+      <div>
+        <div class="section-heading"><div><p class="eyebrow">Fencing</p><h2>Shard Leases</h2></div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Shard</th><th>Node</th><th>Epoch</th><th>Expires</th></tr></thead><tbody id="leases"></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="app.js" defer></script>
+</body>
+</html>
