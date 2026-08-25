@@ -1,0 +1,15 @@
+{
+  "mode": "service",
+  "start": "go run ./cmd/broker -config configs/broker.yaml",
+  "workdir": ".",
+  "env": {
+    "BROKER_HTTP_ADDRESS": "127.0.0.1:18080",
+    "BROKER_GRPC_ADDRESS": "127.0.0.1:19090",
+    "BROKER_AMQP_ADDRESS": "127.0.0.1:15672",
+    "BROKER_STORAGE_DRIVER": "file",
+    "BROKER_DATA_DIR": "/tmp/amqp-broker-core-012"
+  },
+  "ready_url": "http://127.0.0.1:18080/readyz",
+  "ready_status": [200],
+  "startup_timeout": 30
+}
