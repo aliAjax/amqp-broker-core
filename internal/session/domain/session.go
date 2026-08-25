@@ -67,7 +67,11 @@ func (s *Session) Attach(handle uint32, linkID string) error {
 	s.Links[handle] = linkID
 	return nil
 }
-func (s *Session) Detach(handle uint32) { s.mu.Lock(); delete(s.Links, handle); s.mu.Unlock() }
+func (s *Session) Detach(handle uint32) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.Links, handle)
+}
 func (s *Session) ConsumeIncoming() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -90,7 +94,7 @@ func (s *Session) AdvanceOutgoing() (uint32, error) {
 }
 func (s *Session) Flow(incoming, outgoing uint32) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.IncomingWindow = incoming
 	s.OutgoingWindow = outgoing
-	s.mu.Unlock()
 }

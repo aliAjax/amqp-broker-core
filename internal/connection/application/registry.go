@@ -18,14 +18,14 @@ func NewRegistry(max int) *Registry {
 	return &Registry{max: max, items: map[string]*domain.Connection{}}
 }
 func (r *Registry) Add(c *domain.Connection) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if len(r.items) >= r.max {
 		return errors.New("connection limit reached")
 	}
 	if _, ok := r.items[c.ID]; ok {
 		return errors.New("connection already registered")
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	r.items[c.ID] = c
 	return nil
 }
@@ -51,7 +51,7 @@ func (r *Registry) Expired(now time.Time) []*domain.Connection {
 	defer r.mu.RUnlock()
 	out := []*domain.Connection{}
 	for _, c := range r.items {
-		if c.IdleTimeout > 0 && now.Sub(c.LastActivity) > c.IdleTimeout {
+		if c.Expired(now) {
 			out = append(out, c)
 		}
 	}

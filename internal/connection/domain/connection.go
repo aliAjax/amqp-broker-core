@@ -65,14 +65,14 @@ func (c *Connection) Transition(next State) error {
 }
 func (c *Connection) Touch(now time.Time) { c.mu.Lock(); c.LastActivity = now.UTC(); c.mu.Unlock() }
 func (c *Connection) AddSession(channel uint16, id string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.State != StateOpen {
 		return errors.New("connection is not open")
 	}
 	if _, ok := c.Sessions[channel]; ok {
 		return errors.New("channel already in use")
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.Sessions[channel] = id
 	return nil
 }
@@ -83,12 +83,30 @@ func (c *Connection) RemoveSession(channel uint16) {
 }
 func (c *Connection) Snapshot() Snapshot {
 	c.mu.RLock()
+	defer c.mu.RUnlock()
 	count := len(c.Sessions)
-	c.mu.RUnlock()
 	return Snapshot{ID: c.ID, ContainerID: c.ContainerID, Remote: c.Remote, State: c.State, MaxFrame: c.MaxFrame, IdleTimeout: c.IdleTimeout.String(), OpenedAt: c.OpenedAt, LastActivity: c.LastActivity, SessionCount: count}
 }
 func (c *Connection) Expired(now time.Time) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.IdleTimeout > 0 && now.Sub(c.LastActivity) > c.IdleTimeout
+}
+func (c *Connection) MaxFrameSize() uint32 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.MaxFrame
+}
+func (c *Connection) IdleTimeoutMillis() uint32 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return uint32(c.IdleTimeout / time.Millisecond)
+}
+func (c *Connection) SetOpen(container string, maxFrame uint32) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.ContainerID = container
+	if maxFrame >= 512 && maxFrame < c.MaxFrame {
+		c.MaxFrame = maxFrame
+	}
 }

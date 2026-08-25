@@ -122,10 +122,10 @@ func (s *Server) handle(ctx context.Context, nc net.Conn) error {
 		return err
 	}
 	for {
-		if c.IdleTimeout > 0 {
-			_ = nc.SetReadDeadline(time.Now().Add(c.IdleTimeout))
+		if c.IdleTimeoutMillis() > 0 {
+			_ = nc.SetReadDeadline(time.Now().Add(time.Duration(c.IdleTimeoutMillis()) * time.Millisecond))
 		}
-		frame, err := amqpapp.ReadFrame(nc, c.MaxFrame)
+		frame, err := amqpapp.ReadFrame(nc, c.MaxFrameSize())
 		if err != nil {
 			return err
 		}
@@ -162,7 +162,7 @@ func (p *peer) handshake(ctx context.Context) error {
 		if err = p.write(0, amqp.FrameTypeSASL, mech, nil); err != nil {
 			return err
 		}
-		frame, err := amqpapp.ReadFrame(p.net, p.connection.MaxFrame)
+		frame, err := amqpapp.ReadFrame(p.net, p.connection.MaxFrameSize())
 		if err != nil {
 			return err
 		}
@@ -229,14 +229,11 @@ func (p *peer) onOpen(perf amqp.Performative) error {
 	if p.connection.Snapshot().State != conn.StateHeader {
 		return errors.New("duplicate open")
 	}
-	p.connection.ContainerID = perf.String(0)
-	if peerMax := perf.Uint(2); peerMax >= 512 && peerMax < p.connection.MaxFrame {
-		p.connection.MaxFrame = peerMax
-	}
+	p.connection.SetOpen(perf.String(0), perf.Uint(2))
 	if err := p.connection.Transition(conn.StateOpen); err != nil {
 		return err
 	}
-	reply := amqp.Performative{Descriptor: amqp.DescriptorOpen, Fields: []any{"amqp-broker-core", nil, p.connection.MaxFrame, uint16(65535), uint32(p.connection.IdleTimeout / time.Millisecond)}}
+	reply := amqp.Performative{Descriptor: amqp.DescriptorOpen, Fields: []any{"amqp-broker-core", nil, p.connection.MaxFrameSize(), uint16(65535), p.connection.IdleTimeoutMillis()}}
 	return p.write(0, amqp.FrameTypeAMQP, reply, nil)
 }
 func (p *peer) onBegin(channel uint16, _ amqp.Performative) error {
@@ -460,7 +457,7 @@ func (p *peer) write(channel uint16, typ byte, perf amqp.Performative, payload [
 	}
 	frame.Type = typ
 	_ = p.net.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	return amqpapp.WriteFrame(p.net, frame, p.connection.MaxFrame)
+	return amqpapp.WriteFrame(p.net, frame, p.connection.MaxFrameSize())
 }
 func randomID(prefix string) (string, error) {
 	b := make([]byte, 10)

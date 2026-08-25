@@ -52,8 +52,17 @@ func (l *Link) Attach() error {
 	l.State = StateAttached
 	return nil
 }
-func (l *Link) Detach()             { l.mu.Lock(); l.State = StateDetached; l.Credit = 0; l.mu.Unlock() }
-func (l *Link) Grant(credit uint32) { l.mu.Lock(); l.Credit = credit; l.mu.Unlock() }
+func (l *Link) Detach() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.State = StateDetached
+	l.Credit = 0
+}
+func (l *Link) Grant(credit uint32) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.Credit = credit
+}
 func (l *Link) Consume(size uint64) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
